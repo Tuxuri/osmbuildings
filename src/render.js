@@ -89,6 +89,7 @@ function render() {
         }
 
         roof = []; // typed array would be created each pass and is way too slow
+        context.strokeStyle = '#666666';
 
         for (j = 0, jl = footprint.length - 3; j < jl; j += 2) {
             ax = footprint[j];
@@ -123,7 +124,7 @@ function render() {
                     ax, ay,
                     _a.x, _a.y,
                     _b.x, _b.y
-                ]);
+                ], true);
             }
             roof[j]     = _a.x;
             roof[j + 1] = _a.y;
@@ -131,9 +132,49 @@ function render() {
 
         // fill roof and optionally stroke it
         context.fillStyle   = item[RENDER_COLOR][2] || roofColorAlpha;
-        context.strokeStyle = item[RENDER_COLOR][1] || altColorAlpha;
+        context.strokeStyle = '#333333';
         drawShape(roof, true);
     }
+}
+
+var sqrt = Math.sqrt, rand = Math.random;
+
+// http://mrale.ph/blog/2012/11/25/shaky-diagramming.html
+function shakyLine(x0, y0, x1, y1, context) {
+
+    context.lineWidth = 2;
+
+    var dx = x1-x0;
+    var dy = y1-y0;
+    var l = sqrt(dx * dx + dy * dy);
+
+    // Now we need to pick two random points that are placed
+    // on different sides of the line that passes through
+    // P1 and P2 and not very far from it if length of
+    // P1P2 is small.
+
+    var k  = sqrt(l);// 1.5;
+    var k1 = rand();
+    var k2 = rand();
+    var l3 = rand() * k;
+    var l4 = rand() * k;
+
+    // Point P3: pick a random point on the line between P0 and P1,
+    // then shift it by vector l3l(dy,-dx) which is a line's normal.
+    var x3 = x0 + dx * k1 + dy/l * l3;
+    var y3 = y0 + dy * k1 - dx/l * l3;
+
+    // Point P3: pick a random point on the line between P0 and P1,
+    // then shift it by vector l4l(-dy,dx) which also is a line's normal
+    // but points into opposite direction from the one we used for P3.
+    var x4 = x0 + dx * k2 - dy/l * l4;
+    var y4 = y0 + dy * k2 + dx/l * l4;
+
+    // Draw a bezier curve through points P0, P3, P4, P1.
+    // Selection of P3 and P4 makes line "jerk" a little
+    // between them but otherwise it will be mostly straight thus
+    // creating illusion of being hand drawn.
+    context.bezierCurveTo(x3, y3, x4, y4, x1, y1);
 }
 
 function drawShape(points, stroke) {
@@ -144,8 +185,9 @@ function drawShape(points, stroke) {
     context.beginPath();
     context.moveTo(points[0], points[1]);
     for (var i = 2, il = points.length; i < il; i += 2) {
-        context.lineTo(points[i], points[i + 1]);
+        shakyLine(points[i-2], points[i-1], points[i], points[i+1], context);
     }
+
     context.closePath();
     if (stroke) {
         context.stroke();
@@ -168,7 +210,7 @@ function debugMarker(x, y, color, size) {
     context.fill();
 }
 
-function debugLine(ax, ay, bx, by, color, size) {
+function debugLine(ax, ay, bx, by, color) {
     context.strokeStyle = color || '#ff0000';
     context.beginPath();
     context.moveTo(ax, ay);

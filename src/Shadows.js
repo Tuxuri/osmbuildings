@@ -54,6 +54,7 @@ var Shadows = {
             mode,
             isVisible,
             ax, ay, bx, by,
+            x0, y0,
             a, b, _a, _b,
             points,
             allFootprints = []
@@ -110,49 +111,41 @@ var Shadows = {
                 }
 
                 if ((bx - ax) * (_a.y - ay) > (_a.x - ax) * (by - ay)) {
-                    if (mode === 1) {
-                        context.lineTo(ax, ay);
+                    if (mode === 1) { // is roof point
+                        shakyLine(x0, y0, ax, ay, context);
+                        x0 = ax;
+                        y0 = ay;
                     }
-                    mode = 0;
+                    mode = 0; // set to ground point
                     if (!j) {
                         context.moveTo(ax, ay);
+                        x0 = ax;
+                        y0 = ay;
                     }
-                    context.lineTo(bx, by);
+                    shakyLine(x0, y0, bx, by, context);
+                    x0 = bx;
+                    y0 = by;
                 } else {
-                    if (mode === 0) {
-                        context.lineTo(_a.x, _a.y);
+                    if (mode === 0) { // is ground point
+                        shakyLine(x0, y0, _a.x, _a.y, context);
+                        x0 = _a.x;
+                        y0 = _a.y;
                     }
-                    mode = 1;
+                    mode = 1; // set to roof point
                     if (!j) {
                         context.moveTo(_a.x, _a.y);
+                        x0 = _a.x;
+                        y0 = _a.y;
                     }
-                    context.lineTo(_b.x, _b.y);
+                    shakyLine(x0, y0, _b.x, _b.y, context);
+                    x0 = _b.x;
+                    y0 = _b.y;
                 }
             }
-
-            context.closePath();
-
-            allFootprints.push(footprint);
         }
 
         context.fillStyle = colorStr;
         context.fill();
-
-        // now draw all the footprints as negative clipping mask
-        context.globalCompositeOperation = 'destination-out';
-        context.beginPath();
-        for (i = 0, il = allFootprints.length; i < il; i++) {
-            points = allFootprints[i];
-            context.moveTo(points[0], points[1]);
-            for (j = 2, jl = points.length; j < jl; j += 2) {
-                context.lineTo(points[j], points[j + 1]);
-            }
-            context.lineTo(points[0], points[1]);
-            context.closePath();
-        }
-        context.fillStyle = '#00ff00';
-        context.fill();
-        context.globalCompositeOperation = 'source-over';
     },
 
     project: function (x, y, h) {

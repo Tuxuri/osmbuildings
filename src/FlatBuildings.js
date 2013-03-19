@@ -27,10 +27,12 @@ var FlatBuildings = {
             offY = originY - meta.y,
             footprint,
             isVisible,
-            ax, ay
+            ax, ay,
+            x0, y0
         ;
 
-        context.beginPath();
+        context.fillStyle   = roofColorAlpha;
+        context.strokeStyle = '#666666';
 
         for (i = 0, il = data.length; i < il; i++) {
             item = data[i];
@@ -38,6 +40,7 @@ var FlatBuildings = {
             isVisible = false;
             f = item[FOOTPRINT];
             footprint = [];
+
             for (j = 0, jl = f.length - 1; j < jl; j += 2) {
                 footprint[j]     = x = (f[j]     - offX);
                 footprint[j + 1] = y = (f[j + 1] - offY);
@@ -52,24 +55,22 @@ var FlatBuildings = {
                 continue;
             }
 
-            for (j = 0, jl = footprint.length - 3; j < jl; j += 2) {
+            context.beginPath();
+            for (j = 0, jl = footprint.length-3; j < jl; j += 2) {
                 ax = footprint[j];
                 ay = footprint[j + 1];
                 if (!j) {
                     context.moveTo(ax, ay);
                 } else {
-                    context.lineTo(ax, ay);
+                    shakyLine(x0, y0, ax, ay, context);
                 }
+                    x0 = ax;
+                    y0 = ay;
             }
-
             context.closePath();
+            context.stroke();
+            context.fill();
         }
-
-        context.fillStyle   = roofColorAlpha;
-        context.strokeStyle = altColorAlpha;
-
-        context.stroke();
-        context.fill();
     },
 
     getMaxHeight: function () {
